@@ -138,8 +138,28 @@ const api = () => {
     await pool.query("DELETE FROM customers WHERE id=$1", [customerId]);
     return response.status(201).send(`Customer ${customerId} deleted!`);
   };
-  const getCustomerOrderItems = async (request, response) => {};
-  // order references, order dates, product names, unit prices, suppliers and quantities.
+  const getCustomerOrderItems = async (request, response) => {
+    const customerId = request.params.customerId;
+    // order references, order dates, product names, unit prices, suppliers and quantities.
+    const customer = await pool.query(
+      `select 
+            o.order_reference
+            o.order_date
+            p.product.name
+            p.unit_price
+            s.supplier_name
+            oi.quantity
+            from order items oi
+            inner join orders o on o.id = oi.order_id
+            inner join customers c on c.id = o.customer_id
+            inner join products p on p.id = oi.product_id
+            inner join suppliers on s.id = p.supplier.id
+            where c.id = $1 `,
+      [customerId]
+    );
+    return response.status(200).json(customer.rows);
+  };
+
   return {
     getProducts,
     getCustomerById,
