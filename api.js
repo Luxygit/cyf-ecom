@@ -1,8 +1,4 @@
 const { Pool } = require("pg");
-const express = require("express");
-const app = express();
-const bodyParser = require("body-parser");
-app.use(bodyParser.json());
 
 const pool = new Pool({
   user: "postgres",
@@ -47,7 +43,7 @@ const api = () => {
     );
     return response.status(200).json(customer.rows);
   };
-  //NOT working properly
+
   const postNewCustomer = async (request, response) => {
     const newCustomer = request.body;
     console.log(newCustomer);
@@ -67,14 +63,14 @@ const api = () => {
     const newProduct = request.body;
     const newSupplierId = newProduct.supplier_id;
     const supplierSearch = await pool.query(
-      `SELECT * FROM suppliers WHERE supplier_name=$1`,
+      `SELECT * FROM suppliers WHERE id=$1`,
       [newSupplierId]
     );
     if (!Number.isInteger(newProduct.unit_price)) {
       return response
         .status(400)
         .send("Unit Price should be a positive integer");
-    } else if ((supplierSearch = 0)) {
+    } else if (supplierSearch.rows.length === 0) {
       return response
         .status(400)
         .json({ message: "Supplier not in Database!" });
@@ -92,7 +88,7 @@ const api = () => {
     const poolQuery = await pool.query("SELECT * FROM customers WHERE id=$1", [
       customerId,
     ]);
-    if ((poolQuery.rows.length = 0)) {
+    if (poolQuery.rows.length === 0) {
       return response.status(400).send("Customer with that Id doesn't exist!");
     }
     const result = await pool.query(
@@ -143,18 +139,18 @@ const api = () => {
     // order references, order dates, product names, unit prices, suppliers and quantities.
     const customer = await pool.query(
       `select 
-            o.order_reference
-            o.order_date
-            p.product.name
-            p.unit_price
-            s.supplier_name
+            o.order_reference,
+            o.order_date,
+            p.product_name,
+            p.unit_price,
+            s.supplier_name,
             oi.quantity
-            from order items oi
+            from order_items oi
             inner join orders o on o.id = oi.order_id
             inner join customers c on c.id = o.customer_id
             inner join products p on p.id = oi.product_id
-            inner join suppliers on s.id = p.supplier.id
-            where c.id = $1 `,
+            inner join suppliers s on s.id = p.supplier_id
+            where c.id = $1`,
       [customerId]
     );
     return response.status(200).json(customer.rows);

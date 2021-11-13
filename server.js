@@ -3,6 +3,8 @@ const app = express();
 const apiFunction = require("./api.js");
 const api = apiFunction();
 const PORT = 4000;
+const bodyParser = require("body-parser");
+app.use(bodyParser.json());
 
 app.get(`/customers/:customerId/orders`, api.getCustomerOrderItems);
 app.delete(`/customers/:customerId`, api.deleteCustomer);
